@@ -234,6 +234,11 @@ void ImGuiRenderer::draw_render_settings_panel()
 		m_render_window->set_render_dirty(true);
 	}
 
+	if (ImGui::InputInt("Max shadowed bounces", &render_settings.max_shadowed_bounces))
+	{
+		m_render_window->set_render_dirty(true);
+	}
+
 	ImGui::Dummy(ImVec2(0.0f, 20.0f));
 	if (ImGui::CollapsingHeader("Render stopping condition"))
 	{

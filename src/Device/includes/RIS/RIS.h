@@ -16,7 +16,7 @@
 #include "HostDeviceCommon/RenderData.h"
 
 // TODO make some simplification assuming that ReSTIR DI is never inside a surface (the camera being inside a surface may be an annoying case to handle)
-HIPRT_HOST_DEVICE HIPRT_INLINE ColorRGB32F evaluate_reservoir_sample(const HIPRTRenderData& render_data, const RayPayload& ray_payload, const float3& shading_point, const float3& shading_normal, const float3& view_direction, const RISReservoir& reservoir)
+HIPRT_HOST_DEVICE HIPRT_INLINE ColorRGB32F evaluate_reservoir_sample(const HIPRTRenderData& render_data, const RayPayload& ray_payload, const float3& shading_point, const float3& shading_normal, const float3& view_direction, const RISReservoir& reservoir, int bounce)
 {
     ColorRGB32F final_color;
 
@@ -37,11 +37,16 @@ HIPRT_HOST_DEVICE HIPRT_INLINE ColorRGB32F evaluate_reservoir_sample(const HIPRT
         in_shadow = false;
     else
     {
-        hiprtRay shadow_ray;
-        shadow_ray.origin = evaluated_point;
-        shadow_ray.direction = shadow_ray_direction_normalized;
+        if (bounce < render_data.render_settings.max_shadowed_bounces)
+        {
+            hiprtRay shadow_ray;
+            shadow_ray.origin = evaluated_point;
+            shadow_ray.direction = shadow_ray_direction_normalized;
 
-        in_shadow = evaluate_shadow_ray(render_data, shadow_ray, distance_to_light);
+            in_shadow = evaluate_shadow_ray(render_data, shadow_ray, distance_to_light);
+        }
+        else
+            in_shadow = false;
     }
 
     if (!in_shadow)
@@ -264,11 +269,11 @@ HIPRT_HOST_DEVICE HIPRT_INLINE RISReservoir sample_bsdf_and_lights_RIS_reservoir
     return reservoir;
 }
 
-HIPRT_HOST_DEVICE HIPRT_INLINE ColorRGB32F sample_lights_RIS(const HIPRTRenderData& render_data, const RayPayload& ray_payload, const HitInfo closest_hit_info, const float3& view_direction, Xorshift32Generator& random_number_generator)
+HIPRT_HOST_DEVICE HIPRT_INLINE ColorRGB32F sample_lights_RIS(const HIPRTRenderData& render_data, const RayPayload& ray_payload, const HitInfo closest_hit_info, const float3& view_direction, Xorshift32Generator& random_number_generator, int bounce)
 {
     RISReservoir reservoir = sample_bsdf_and_lights_RIS_reservoir(render_data, ray_payload, closest_hit_info, view_direction, random_number_generator);
 
-    return evaluate_reservoir_sample(render_data, ray_payload, closest_hit_info.inter_point, closest_hit_info.shading_normal, view_direction, reservoir);
+    return evaluate_reservoir_sample(render_data, ray_payload, closest_hit_info.inter_point, closest_hit_info.shading_normal, view_direction, reservoir, bounce);
 }
 
 #endif

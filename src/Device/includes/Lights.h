@@ -243,7 +243,7 @@ HIPRT_HOST_DEVICE HIPRT_INLINE ColorRGB32F sample_one_light(const HIPRTRenderDat
 #elif DirectLightSamplingStrategy == LSS_MIS_LIGHT_BSDF
     direct_light_contribution = sample_one_light_MIS(render_data, ray_payload, closest_hit_info, view_direction, random_number_generator);
 #elif DirectLightSamplingStrategy == LSS_RIS_BSDF_AND_LIGHT
-    direct_light_contribution = sample_lights_RIS(render_data, ray_payload, closest_hit_info, view_direction, random_number_generator);
+    direct_light_contribution = sample_lights_RIS(render_data, ray_payload, closest_hit_info, view_direction, random_number_generator, bounce);
 #elif DirectLightSamplingStrategy == LSS_RESTIR_DI
 
     if (bounce == 0)
