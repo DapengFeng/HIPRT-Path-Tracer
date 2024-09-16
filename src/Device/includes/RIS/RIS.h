@@ -37,16 +37,15 @@ HIPRT_HOST_DEVICE HIPRT_INLINE ColorRGB32F evaluate_reservoir_sample(const HIPRT
         in_shadow = false;
     else
     {
-        if (bounce < render_data.render_settings.max_shadowed_bounces)
-        {
-            hiprtRay shadow_ray;
-            shadow_ray.origin = evaluated_point;
-            shadow_ray.direction = shadow_ray_direction_normalized;
+        float shadow_ray_distance = distance_to_light;
+        if (bounce > render_data.render_settings.max_shadowed_bounces && render_data.render_settings.max_shadow_distance)
+            shadow_ray_distance = hippt::min(distance_to_light, render_data.render_settings.max_shadow_distance);
+         
+        hiprtRay shadow_ray;
+        shadow_ray.origin = evaluated_point;
+        shadow_ray.direction = shadow_ray_direction_normalized;
 
-            in_shadow = evaluate_shadow_ray(render_data, shadow_ray, distance_to_light);
-        }
-        else
-            in_shadow = false;
+        in_shadow = evaluate_shadow_ray(render_data, shadow_ray, shadow_ray_distance);
     }
 
     if (!in_shadow)
@@ -83,7 +82,7 @@ HIPRT_HOST_DEVICE HIPRT_INLINE ColorRGB32F evaluate_reservoir_sample(const HIPRT
     return final_color;
 }
 
-HIPRT_HOST_DEVICE HIPRT_INLINE RISReservoir sample_bsdf_and_lights_RIS_reservoir(const HIPRTRenderData& render_data, const RayPayload& ray_payload, const HitInfo closest_hit_info, const float3& view_direction, Xorshift32Generator& random_number_generator)
+HIPRT_HOST_DEVICE HIPRT_INLINE RISReservoir sample_bsdf_and_lights_RIS_reservoir(const HIPRTRenderData& render_data, const RayPayload& ray_payload, const HitInfo closest_hit_info, const float3& view_direction, Xorshift32Generator& random_number_generator, int bounce)
 {
     // Pushing the intersection point outside the surface (if we're already outside)
     // or inside the surface (if we're inside the surface)
@@ -209,6 +208,8 @@ HIPRT_HOST_DEVICE HIPRT_INLINE RISReservoir sample_bsdf_and_lights_RIS_reservoir
 
             HitInfo bsdf_ray_hit_info;
             RayPayload bsdf_ray_payload;
+            if (bounce > render_data.render_settings.max_shadowed_bounces && render_data.render_settings.max_shadow_distance > 0.0f)
+                bsdf_ray.maxT = render_data.render_settings.max_shadow_distance;
             bool hit_found = trace_ray(render_data, bsdf_ray, bsdf_ray_payload, bsdf_ray_hit_info);
             if (hit_found && bsdf_ray_payload.material.is_emissive())
             {
@@ -271,7 +272,7 @@ HIPRT_HOST_DEVICE HIPRT_INLINE RISReservoir sample_bsdf_and_lights_RIS_reservoir
 
 HIPRT_HOST_DEVICE HIPRT_INLINE ColorRGB32F sample_lights_RIS(const HIPRTRenderData& render_data, const RayPayload& ray_payload, const HitInfo closest_hit_info, const float3& view_direction, Xorshift32Generator& random_number_generator, int bounce)
 {
-    RISReservoir reservoir = sample_bsdf_and_lights_RIS_reservoir(render_data, ray_payload, closest_hit_info, view_direction, random_number_generator);
+    RISReservoir reservoir = sample_bsdf_and_lights_RIS_reservoir(render_data, ray_payload, closest_hit_info, view_direction, random_number_generator, bounce);
 
     return evaluate_reservoir_sample(render_data, ray_payload, closest_hit_info.inter_point, closest_hit_info.shading_normal, view_direction, reservoir, bounce);
 }
