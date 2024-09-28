@@ -1061,7 +1061,12 @@ size_t GPURenderer::get_ray_volume_state_byte_size()
 	m_ray_volume_state_byte_size_kernel.launch(1, 1, 1, 1, launch_args, 0);
 	oroStreamSynchronize(0);
 
+
 	std::vector<size_t> ray_volume_state_size = out_size_buffer.download_data();
+
+	std::cout << "CPU: " << sizeof(RayVolumeState) << std::endl;
+	std::cout << "GPU: " << ray_volume_state_size[0] << std::endl;
+	
 	return ray_volume_state_size[0];
 }
 

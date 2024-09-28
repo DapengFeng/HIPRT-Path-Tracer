@@ -133,11 +133,19 @@ struct InteriorStackImpl<ISS_AUTOMATIC>
 
 struct StackPriorityEntry
 {
+	HIPRT_HOST_DEVICE StackPriorityEntry()
+	{
+		material_index = -1;
+		topmost = true;
+		odd_parity = true;
+		priority = -1;
+	}
+
 	// TODO do packing in here, can all fit in 1 int and test num registers with the playground
-	int material_index = -1;
-	bool topmost = true;
-	bool odd_parity = true;
-	int priority = -1;
+	int material_index : 26;
+	bool topmost : 1;
+	bool odd_parity : 1;
+	int priority : 4;
 };
 
 template <>
