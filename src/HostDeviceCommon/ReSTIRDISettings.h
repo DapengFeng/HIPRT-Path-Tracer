@@ -78,7 +78,7 @@ struct SpatialPassSettings
 
 	// If true, reused neighbors will be hardcoded to always be 15 pixels to the right,
 	// not in a circle around the center pixel.
-	bool debug_neighbor_location = true;
+	bool debug_neighbor_location = false;
 
 	// Whether or not to rotate the spatial neighbor locations generated.
 	// Pretty much mandatory when using Hammersley points otherwise the neighbors
@@ -119,6 +119,12 @@ struct LightPresamplingSettings
 	ReSTIRDIPresampledLight* light_samples;
 };
 
+struct DecoupledShadingReuseSettings
+{
+	// The buffer that holds the shading of the initial candidates/temporal/spatial neighbors
+	ColorRGB32F* shading_buffer = nullptr;
+};
+
 struct ReSTIRDISettings
 {
 	// Settings for the initial candidates generation pass
@@ -129,6 +135,7 @@ struct ReSTIRDISettings
 	SpatialPassSettings spatial_pass;
 	// Settings for the light presampling pass
 	LightPresamplingSettings light_presampling;
+	DecoupledShadingReuseSettings decoupled_shading_reuse;
 
 	// If true, the spatial and temporal pass will be fused into a single kernel call.
 	// This avois a synchronization barrier between the temporal pass and the spatial pass
